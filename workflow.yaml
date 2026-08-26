@@ -1,0 +1,12 @@
+yawl: '0.1'
+start: call_assistant
+
+steps:
+  call_assistant:
+    functionCall:
+      functionId: d4e7dhm6srv8dddn5ji1
+      payload:
+        message:
+          text: "{{ input.message }}"
+    result:
+      text: "{{ steps.call_assistant.result.body.response.text }}"

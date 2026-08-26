@@ -1,0 +1,90 @@
+# 🤖 Чат-бот для вопросов по API HeadHunter (HH.ru)
+
+Этот проект — интеллектуальный Telegram-бот, который отвечает на вопросы разработчиков об API HeadHunter. Бот использует технологию **RAG (Retrieval-Augmented Generation)** на базе **YandexGPT** и собственной базы знаний, собранной из официальной документации HH.ru.
+
+## 📖 О проекте
+
+Бот помогает разработчикам быстро находить информацию по API HH.ru, снижая нагрузку на техническую поддержку. Вместо того чтобы читать всю документацию, разработчик может просто задать вопрос боту на естественном языке.
+
+### Как это работает
+
+1. Пользователь пишет вопрос в Telegram-боте.
+2. Бот ищет в базе знаний (PostgreSQL) фрагменты документации, релевантные запросу.
+3. Найденный контекст отправляется в YandexGPT для генерации точного и понятного ответа.
+4. Ответ возвращается пользователю.
+
+### Технологический стек
+
+- **Python 3.12** — язык программирования
+- **FastAPI** — веб-фреймворк (для API и вебхуков)
+- **SQLAlchemy** — ORM для работы с базой данных
+- **PostgreSQL (Supabase)** — база данных для хранения документации и истории диалогов
+- **YandexGPT** — языковая модель для генерации ответов
+- **python-telegram-bot** — библиотека для работы с Telegram Bot API
+
+## 🚀 Установка и запуск
+
+### 1. Клонировать репозиторий
+
+```bash
+git clone https://github.com/MaxOn4ik1/hh-bot.git
+cd hh-bot
+
+### 2. Создать и активировать виртуальное окружение
+bash
+python3 -m venv venv
+source venv/bin/activate  # для Linux/macOS
+# venv\Scripts\activate   # для Windows
+
+### 3. Установить зависимости
+bash
+pip install -r requirements.txt
+
+### 4. Настроить переменные окружения
+Создайте файл .env в корне проекта и заполните его:
+
+env
+# База данных (Supabase)
+DB_HOST=aws-1-eu-west-2.pooler.supabase.com
+DB_PORT=6543
+DB_NAME=postgres
+DB_USER=postgres.mntghuupqkblptfujvvx
+DB_PASSWORD=FSn-ewi-Q4K-sdx
+
+# Yandex Cloud
+YANDEX_API_KEY=ваш_ключ
+YANDEX_FOLDER_ID=ваш_folder_id
+YANDEX_ASSISTANT_ID=ваш_assistant_id
+
+# Telegram
+TELEGRAM_TOKEN=ваш_токен_от_BotFather
+
+### 5. Запустить бота
+bash
+python -m app.bot
+
+После запуска в терминале появится сообщение 🤖 Бот запущен.... Теперь бот готов принимать сообщения в Telegram.
+
+📂 Структура проекта
+text
+hh-bot/
+├── app/
+│   ├── db/               # Работа с базой данных
+│   │   ├── db.py         # Подключение к PostgreSQL
+│   │   ├── models.py     # Модели таблиц
+│   │   └── crud.py       # CRUD-операции
+│   ├── services/         # Логика приложения
+│   │   ├── yandex.py     # Взаимодействие с YandexGPT
+│   │   ├── rag.py        # Поиск + генерация ответа
+│   │   └── kb_loader.py  # Загрузка документации в БД
+│   ├── bot.py            # Основной файл Telegram-бота
+│   └── main.py           # FastAPI-приложение (для API)
+├── examples/             # Скриншоты работы
+├── .env                  # Переменные окружения
+├── requirements.txt      # Зависимости
+└── README.md             # Документация
+
+### Примечания
+Бот работает в режиме polling (локальный запуск). Для круглосуточной работы рекомендуется развернуть его на сервере (например, в Yandex Cloud Functions или на VPS).
+
+Для обновления базы знаний используйте скрипт kb_loader.py.

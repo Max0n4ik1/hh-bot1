@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+python-dotenv
+yandexcloud
+requests
+beautifulsoup4
+markdown
+python-telegram-bot==20.8
