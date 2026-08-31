@@ -6,3 +6,16 @@ data/
 *.log
 .vscode/
 .idea/
+# Архивы
+*.zip
+*.rar
+*.7z
+
+# Видео (если не нужно хранить в репозитории)
+*.mov
+*.mp4
+
+# Секреты
+.env
+.env.local
+.env.*.local
