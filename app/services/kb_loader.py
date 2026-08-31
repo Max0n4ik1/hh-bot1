@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from sqlalchemy.orm import Session
 from app.db.models import KnowledgeBase
+from app.services.embedder import get_embedding
 
 # URL для скачивания документации HH.ru
 HH_DOCS_URL = "https://api.github.com/repos/hhru/api/contents/docs"
@@ -36,7 +37,7 @@ def download_documentation():
 
 
 def save_to_database(db: Session, docs: list):
-    """Сохраняет документацию в базу данных"""
+    """Сохраняет документацию в базу данных с эмбеддингами"""
     count = 0
     for doc in docs:
         # Проверяем, есть ли уже такой документ
@@ -45,15 +46,19 @@ def save_to_database(db: Session, docs: list):
         ).first()
         
         if not existing:
-            # Разбиваем на фрагменты по заголовкам
+            # Разбиваем на фрагменты
             fragments = split_by_headers(doc['content'])
             
             for fragment in fragments:
+                # Генерируем эмбеддинг
+                embedding = get_embedding(fragment)
+                
                 kb_entry = KnowledgeBase(
                     title=doc['title'],
                     content=fragment,
                     source_url=doc['source_url'],
-                    category=doc['category']
+                    category=doc['category'],
+                    embedding=json.dumps(embedding)  # сохраняем как JSON
                 )
                 db.add(kb_entry)
                 count += 1
