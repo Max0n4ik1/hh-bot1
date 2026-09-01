@@ -37,37 +37,37 @@ def download_documentation():
 
 
 def save_to_database(db: Session, docs: list):
-    """Сохраняет документацию в базу данных с эмбеддингами"""
+    """Сохраняет документацию в базу данных с эмбеддингами (с обновлением)"""
     count = 0
     for doc in docs:
-        # Проверяем, есть ли уже такой документ
-        existing = db.query(KnowledgeBase).filter(
+        # Находим все старые фрагменты этого документа
+        old_items = db.query(KnowledgeBase).filter(
             KnowledgeBase.source_url == doc['source_url']
-        ).first()
+        ).all()
         
-        if not existing:
-            # Разбиваем на фрагменты
-            fragments = split_by_headers(doc['content'])
-            
-            for fragment in fragments:
-                # Генерируем эмбеддинг
-                embedding = get_embedding(fragment)
-                
-                kb_entry = KnowledgeBase(
-                    title=doc['title'],
-                    content=fragment,
-                    source_url=doc['source_url'],
-                    category=doc['category'],
-                    embedding=json.dumps(embedding)  # сохраняем как JSON
-                )
-                db.add(kb_entry)
-                count += 1
+        # Удаляем старые фрагменты
+        for item in old_items:
+            db.delete(item)
+            count += 1  # считаем удалённые как обновлённые
+        
+        # Добавляем новые фрагменты
+        fragments = split_by_headers(doc['content'])
+        for fragment in fragments:
+            embedding = get_embedding(fragment)
+            kb_entry = KnowledgeBase(
+                title=doc['title'],
+                content=fragment,
+                source_url=doc['source_url'],
+                category=doc['category'],
+                embedding=json.dumps(embedding)
+            )
+            db.add(kb_entry)
+            count += 1
         
         db.commit()
     
-    print(f"✅ Добавлено {count} фрагментов в базу знаний")
+    print(f"✅ Обновлено {count} фрагментов в базе знаний")
     return count
-
 
 def split_by_headers(content: str) -> list:
     """Разбивает документ на фрагменты по заголовкам"""

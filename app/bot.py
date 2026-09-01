@@ -1,11 +1,12 @@
 import os
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
 from app.services.rag import get_response
 from app.services.kb_loader import load_knowledge_base
 from app.db.db import SessionLocal
-from app.db.crud import save_dialog
+from app.db.crud import save_dialog, get_dialogs_by_user, create_user, get_user, update_user_last_active
 
 # ========== Telegram Token ==========
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -30,14 +31,28 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     db = SessionLocal()
     try:
-        result = get_response(db, user_message)
+        # Создаём пользователя, если его нет
+        if not get_user(db, str(user_id)):
+            create_user(db, str(user_id), update.effective_user.full_name)
+        else:
+            update_user_last_active(db, str(user_id))
+        
+        # Получаем историю диалогов (последние 3)
+        history = get_dialogs_by_user(db, user_id, limit=3)
+        
+        # Получаем ответ от RAG
+        result = get_response(db, user_message, history)
         answer = result["answer"]
+        
+        # Обрезаем сообщение до лимита Telegram (4096 символов)
+        if len(answer) > 4096:
+            answer = answer[:4093] + "..."
         
         # Сохраняем диалог в БД
         save_dialog(db, user_id, user_message, answer)
         
         print(f"✅ Ответ отправлен")
-        await update.message.reply_text(answer)
+        await update.message.reply_text(answer, parse_mode=ParseMode.MARKDOWN)
     except Exception as e:
         print(f"❌ ОШИБКА: {e}")
         import traceback
@@ -74,6 +89,7 @@ if __name__ == "__main__":
         print("❌ Ошибка: TELEGRAM_TOKEN не задан в .env")
         exit(1)
     
+    # Простой запуск без прокси
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     
     # Регистрируем команды

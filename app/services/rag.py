@@ -12,7 +12,7 @@ def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
-def search_knowledge_base(db: Session, query: str, limit: int = 10, min_score: float = 0.0) -> tuple:
+def search_knowledge_base(db: Session, query: str, limit: int = 10, min_score: float = 0.3) -> tuple:
     query_embedding = get_embedding(query)
     items = db.query(models.KnowledgeBase).filter(
         models.KnowledgeBase.embedding.isnot(None)
@@ -57,15 +57,20 @@ def search_knowledge_base(db: Session, query: str, limit: int = 10, min_score: f
     return context, sources
 
 
-def get_response(db: Session, question: str) -> dict:
+def get_response(db: Session, question: str, history: list = None) -> dict:
     context, sources = search_knowledge_base(db, question)
     
+    # Формируем контекст с учётом истории
     if context:
-        answer = ask_yandex_gpt(question, context)
+        if history:
+            history_text = "\n".join([f"Пользователь: {h.question}\nБот: {h.answer}" for h in history])
+            full_context = f"История диалога:\n{history_text}\n\nТекущий вопрос: {question}\n\nДокументация:\n{context}"
+        else:
+            full_context = f"Вопрос: {question}\n\nДокументация:\n{context}"
         
-        # Добавляем источники только если они есть
+        answer = ask_yandex_gpt(question, full_context)
+        
         if sources:
-            # Берём только 3 самых релевантных источника
             top_sources = sources[:3]
             sources_text = "\n\n📚 **Источники:**\n" + "\n".join(top_sources)
             sources_text += "\n\n🔗 [Полная документация HH.ru](https://github.com/hhru/api)"

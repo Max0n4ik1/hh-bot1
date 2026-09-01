@@ -8,3 +8,6 @@ requests
 beautifulsoup4
 markdown
 python-telegram-bot==20.8
+sentence-transformers
+torch
+numpy
