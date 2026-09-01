@@ -12,7 +12,7 @@ def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
-def search_knowledge_base(db: Session, query: str, limit: int = 10, min_score: float = 0.3) -> tuple:
+def search_knowledge_base(db: Session, query: str, limit: int = 10, min_score: float = 0.1) -> tuple:
     query_embedding = get_embedding(query)
     items = db.query(models.KnowledgeBase).filter(
         models.KnowledgeBase.embedding.isnot(None)
